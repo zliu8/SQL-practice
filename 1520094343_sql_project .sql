@@ -87,6 +87,7 @@ from Members
 right join Bookings on Bookings.memid = Members.memid
 join Facilities on Facilities.facid = Bookings.facid
 where Facilities.facid in (1, 0)
+where Members.memid is not (0)
 order by Full_Name
  
 
@@ -107,24 +108,29 @@ from Members
 right join Bookings on Bookings.memid = Members.memid
 join Facilities on Facilities.facid = Bookings.facid
 where DATE(Bookings.Starttime) = '2012-09-14'
-group by Facilities.Name, Concat(Members.surname," ", Members.firstname), DATE(Bookings.Starttime)
+group by Facilities.Name, Concat(Members.surname," ", Members.firstname)
 Having Total_Cost > 30
 
 
 
 /* Q9: This time, produce the same result as in Q8, but using a subquery. */
+ELECT member, facility, cost
+FROM (
 
- select Facilities.Name ,Concat(Members.surname," ", Members.firstname) as Full_Name
+SELECT CONCAT(mems.surname, ', ', mems.firstname) AS member, facs.name AS facility, 
+CASE 
+	WHEN mems.memid =0
+		THEN bks.slots * facs.guestcost
+	ELSE bks.slots * facs.membercost
+	END AS cost
+FROM  `Members` mems
+	JOIN  `Bookings` bks ON mems.memid = bks.memid
+	INNER JOIN  `Facilities` facs ON bks.facid = facs.facid
+	WHERE bks.starttime >=  '2012-09-14' AND bks.starttime < '2012-09-15') AS bookings
+	WHERE cost >30
+ORDER BY cost DESC
 
-,case when Members.Memid = 0 then Facilities.Guestcost*Bookings.Slots
-else Facilities.Membercost*Bookings.Slots end as Total_Cost
 
-from Members
-right join Bookings on Bookings.memid = Members.memid
-join Facilities on Facilities.facid = Bookings.facid
-where DATE(Bookings.Starttime) = (select distinct DATE(Bookings.Starttime) from Bookings where DATE(Bookings.Starttime) = '2012-09-14')
-group by Facilities.Name, Concat(Members.surname," ", Members.firstname), DATE(Bookings.Starttime)
-Having Total_Cost > 30
 
 
 
